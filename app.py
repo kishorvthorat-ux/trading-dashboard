@@ -7,7 +7,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from main import process_csv
+from /mount/src/trading-dashboard/main import process_csv
 
 st.set_page_config(layout="wide")
 
