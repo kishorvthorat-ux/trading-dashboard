@@ -30,6 +30,22 @@ if uploaded_file:
     col4.metric("Net PnL", round(stats['Net PnL'][0], 2))
 
     # ===============================
+    # DATA PREVIEW
+    # ===============================
+    st.subheader("📄 Calculated Data Preview")
+    st.dataframe(calc.head(20))
+
+    # ===============================
+    # DOWNLOAD EXCEL
+    # ===============================
+    st.download_button(
+        label="📥 Download Excel Report",
+        data=excel_file,
+        file_name="trading_output.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+    # ===============================
     # EQUITY CURVE
     # ===============================
     st.subheader("📈 Equity Curve")
@@ -66,21 +82,6 @@ if uploaded_file:
     fig_month = px.bar(monthly, x='Month', y='Net PnL')
     st.plotly_chart(fig_month, use_container_width=True)
 
-    # ===============================
-    # DATA PREVIEW
-    # ===============================
-    st.subheader("📄 Calculated Data Preview")
-    st.dataframe(calc.head(20))
-
-    # ===============================
-    # DOWNLOAD EXCEL
-    # ===============================
-    st.download_button(
-        label="📥 Download Excel Report",
-        data=excel_file,
-        file_name="trading_output.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
 
 else:
     st.info("👆 Upload a CSV file to start analysis")
