@@ -32,40 +32,37 @@ if file:
         "Stats"
     ])
 
-    # ✅ CALCULATED TABLE
-    with tab1:
-        st.dataframe(
-            calc.style.applymap(
-                color_pnl,
-                subset=["Net PnL", "% Returns", "Cumm Profit"]
-            ),
-            use_container_width=True
-        )
+# ✅ CALCULATED TABLE
+with tab1:
+    styled_calc = calc.style.map(
+        color_pnl,
+        subset=["Net PnL", "% Returns", "Cumm Profit"]
+    )
+    st.dataframe(styled_calc, use_container_width=True)
 
-    # ✅ PNL HEATMAP
-    with tab2:
-        st.dataframe(
-            pnl_pivot.style.background_gradient(cmap="RdYlGn"),
-            use_container_width=True
-        )
+# ✅ PNL HEATMAP
+with tab2:
+    st.dataframe(
+        pnl_pivot.style.background_gradient(cmap="RdYlGn"),
+        use_container_width=True
+    )
 
-    # ✅ RETURNS HEATMAP
-    with tab3:
-        st.dataframe(
-            ret_pivot.style.background_gradient(cmap="RdYlGn"),
-            use_container_width=True
-        )
+# ✅ RETURNS HEATMAP
+with tab3:
+    st.dataframe(
+        ret_pivot.style.background_gradient(cmap="RdYlGn"),
+        use_container_width=True
+    )
 
-    # ✅ STATS
-    with tab4:
-        st.dataframe(
-            stats.style.applymap(
-                color_pnl,
-                subset=["Net PnL", "Avg Profit", "Avg Loss"]
-            )
-        )
-        st.dataframe(occ.style.bar(color="#5fba7d"))
+# ✅ STATS
+with tab4:
+    styled_stats = stats.style.map(
+        color_pnl,
+        subset=["Net PnL", "Avg Profit", "Avg Loss"]
+    )
 
+    st.dataframe(styled_stats)
+    st.dataframe(occ)
+    
     st.download_button("📥 Download Excel", excel, "trading_output.xlsx")
 import main
-
