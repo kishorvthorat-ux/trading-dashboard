@@ -3,6 +3,7 @@ import sys
 
 # Add current directory to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+st.write(os.listdir())
 
 import streamlit as st
 import pandas as pd
