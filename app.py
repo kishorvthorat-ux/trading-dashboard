@@ -8,7 +8,7 @@ st.write(os.listdir())
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from mount.src.trading-dashboard.main import process_csv
+from .main import process_csv
 
 st.set_page_config(layout="wide")
 
