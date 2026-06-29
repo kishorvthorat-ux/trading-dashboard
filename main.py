@@ -84,4 +84,3 @@ def process_csv(file):
     output.seek(0)
 
     return calc, stats, output
-``
