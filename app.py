@@ -30,12 +30,6 @@ if uploaded_file:
     col4.metric("Net PnL", round(stats['Net PnL'][0], 2))
 
     # ===============================
-    # DATA PREVIEW
-    # ===============================
-    st.subheader("📄 Calculated Data Preview")
-    st.dataframe(calc.head(20))
-
-    # ===============================
     # DOWNLOAD EXCEL
     # ===============================
     st.download_button(
@@ -44,6 +38,12 @@ if uploaded_file:
         file_name="trading_output.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
+    # ===============================
+    # DATA PREVIEW
+    # ===============================
+    st.subheader("📄 Calculated Data Preview")
+    st.dataframe(calc.head(20))
 
     # ===============================
     # EQUITY CURVE
