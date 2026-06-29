@@ -26,6 +26,14 @@ if file is not None:
 
     calc, stats, pnl_pivot, ret_pivot, occ, excel = main.process_csv(file)
 
+    # ---------------- DOWNLOAD ----------------
+    st.download_button(
+        "📥 Download Excel Report",
+        excel,
+        file_name="trading_output.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
     # ---------------- KPI ROW ----------------
     col1, col2, col3, col4 = st.columns(4)
 
@@ -93,14 +101,6 @@ if file is not None:
             occ.style.bar(color="#5fba7d", subset=["Count"]),
             use_container_width=True
         )
-
-    # ---------------- DOWNLOAD ----------------
-    st.download_button(
-        "📥 Download Excel Report",
-        excel,
-        file_name="trading_output.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
 
 # ---------------- EMPTY STATE ----------------
 else:
