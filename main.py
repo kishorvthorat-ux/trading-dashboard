@@ -5,16 +5,20 @@ import io
 def process_csv(file):
     df = pd.read_csv(file)
 
-    # Convert datetime
+    # ✅ Clean column names
+    df.columns = df.columns.str.strip()
+
+    # ✅ Ensure datetime
     df['Date and time'] = pd.to_datetime(df['Date and time'])
 
-    # Sort
-    df = df.sort_values(['Trade number', 'Date and time'])
+    # ✅ Sort CORRECTLY (critical for your file)
+    df = df.sort_values(by=['Trade number', 'Date and time'])
 
-    # Split entry / exit
-    entries = df[df['Type'].str.contains("Entry")].copy()
-    exits = df[df['Type'].str.contains("Exit")].copy()
+    # ✅ Split Entry / Exit
+    entries = df[df['Type'].str.contains("Entry", case=False, na=False)].copy()
+    exits = df[df['Type'].str.contains("Exit", case=False, na=False)].copy()
 
+    # ✅ Rename columns
     entries = entries.rename(columns={
         'Type': 'Entry Type',
         'Date and time': 'Entry Date',
@@ -29,18 +33,29 @@ def process_csv(file):
         'Price USD': 'Exit Price'
     })
 
-    calc = pd.merge(entries, exits, on='Trade number')
+    # ✅ Keep ONLY required columns (avoids _x _y issue)
+    entries = entries[['Trade number', 'Entry Type', 'Entry Date', 'Entry Signal', 'Entry Price']]
+    exits = exits[['Trade number', 'Exit Type', 'Exit Date', 'Exit Signal', 'Exit Price']]
+
+    # ✅ Merge
+    calc = pd.merge(entries, exits, on='Trade number', how='inner')
+
+    # ✅ SAFETY CHECK (very important)
+    if 'Entry Price' not in calc.columns or 'Exit Price' not in calc.columns:
+        raise ValueError("Entry/Exit columns missing after merge")
 
     # ===============================
     # CALCULATIONS
     # ===============================
     calc['Points'] = calc['Exit Price'] - calc['Entry Price']
+
     calc['Gross PnL'] = calc['Points'] * 30
     calc['Turnover'] = calc['Entry Price'] * 30
     calc['Brokerage'] = calc['Turnover'] * 0.0005
     calc['Net PnL'] = calc['Gross PnL'] - calc['Brokerage']
 
     calc['Equity'] = 100000 + calc['Net PnL'].cumsum()
+
     calc['Return %'] = (calc['Points'] / calc['Entry Price']) * 100
 
     # ===============================
@@ -58,7 +73,7 @@ def process_csv(file):
     }])
 
     # ===============================
-    # WRITE EXCEL IN MEMORY
+    # EXCEL OUTPUT
     # ===============================
     output = io.BytesIO()
 
@@ -69,3 +84,4 @@ def process_csv(file):
     output.seek(0)
 
     return calc, stats, output
+``
