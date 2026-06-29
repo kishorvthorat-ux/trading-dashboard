@@ -4,7 +4,7 @@ import plotly.express as px
 
 st.title("📊 Trading Dashboard")
 
-uploaded_file = st.file_uploader("Upload Excel file", type=["xlsx"])
+uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
 
 if uploaded_file:
     calc = pd.read_excel(uploaded_file, sheet_name="Calculated")
