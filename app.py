@@ -1,87 +1,68 @@
 import streamlit as st
-import pandas as pd
-import plotly.express as px
-from main import process_csv
+import pandas as.set_page_config(layout="wide")import pandas as pd
 
-st.set_page_config(layout="wide")
+def color_pnl(val):
+    if pd.isna(val):
+        return ""
+    if val > 0:
+        return "background-color: #C6EFCE; color: black"
+    elif val < 0:
+        return "background-color: #FFC7CE; color: black"
+    else:
+        return ""
 
-st.title("📊 Trading Analyzer Dashboard")
+st.title("📊 Trading Dashboard (Excel Replica)")
 
-# ===============================
-# FILE UPLOAD
-# ===============================
-uploaded_file = st.file_uploader("Upload Trading CSV", type=["csv"])
+file = st.file_uploader("Upload Trading CSV", type=["csv"])
 
-if uploaded_file:
+if file:
 
-    # Process file
-    calc, stats, excel_file = process_csv(uploaded_file)
+    calc, stats, pnl_pivot, ret_pivot, occ, excel = main.process_csv(file)
 
-    # ===============================
-    # KPI DISPLAY
-    # ===============================
-    st.subheader("📌 Key Metrics")
-
-    col1, col2, col3, col4 = st.columns(4)
-
-    col1.metric("Total Trades", int(stats['Total Trades'][0]))
-    col2.metric("Wins", int(stats['Wins'][0]))
-    col3.metric("Losses", int(stats['Losses'][0]))
-    col4.metric("Net PnL", round(stats['Net PnL'][0], 2))
-
-    # ===============================
-    # DOWNLOAD EXCEL
-    # ===============================
-    st.download_button(
-        label="📥 Download Excel Report",
-        data=excel_file,
-        file_name="trading_output.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
-
-    # ===============================
-    # DATA PREVIEW
-    # ===============================
-    st.subheader("📄 Calculated Data Preview")
-    st.dataframe(calc.head(20))
-
-    # ===============================
-    # EQUITY CURVE
-    # ===============================
     st.subheader("📈 Equity Curve")
+    st.line_chart(calc.set_index("Entry Date")["Cumm Profit"])
 
-    fig_equity = px.line(calc, y="Equity", title="Equity Growth")
-    st.plotly_chart(fig_equity, use_container_width=True)
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "Calculated",
+        "PnL Pivot",
+        "Returns Pivot",
+        "Stats"
+    ])
 
-    # ===============================
-    # PNL DISTRIBUTION
-    # ===============================
-    st.subheader("📊 PnL Distribution")
+    # ✅ CALCULATED TABLE
+    with tab1:
+        st.dataframe(
+            calc.style.applymap(
+                color_pnl,
+                subset=["Net PnL", "% Returns", "Cumm Profit"]
+            ),
+            use_container_width=True
+        )
 
-    fig_hist = px.histogram(calc, x="Net PnL", nbins=30)
-    st.plotly_chart(fig_hist, use_container_width=True)
+    # ✅ PNL HEATMAP
+    with tab2:
+        st.dataframe(
+            pnl_pivot.style.background_gradient(cmap="RdYlGn"),
+            use_container_width=True
+        )
 
-    # ===============================
-    # WIN / LOSS PIE
-    # ===============================
-    st.subheader("🟢 Win vs 🔴 Loss")
+    # ✅ RETURNS HEATMAP
+    with tab3:
+        st.dataframe(
+            ret_pivot.style.background_gradient(cmap="RdYlGn"),
+            use_container_width=True
+        )
 
-    calc['Result'] = calc['Net PnL'].apply(lambda x: "Win" if x > 0 else "Loss")
+    # ✅ STATS
+    with tab4:
+        st.dataframe(
+            stats.style.applymap(
+                color_pnl,
+                subset=["Net PnL", "Avg Profit", "Avg Loss"]
+            )
+        )
+        st.dataframe(occ.style.bar(color="#5fba7d"))
 
-    fig_pie = px.pie(calc, names="Result")
-    st.plotly_chart(fig_pie)
+    st.download_button("📥 Download Excel", excel, "trading_output.xlsx")
+import main
 
-    # ===============================
-    # MONTHLY PNL
-    # ===============================
-    st.subheader("📅 Monthly Performance")
-
-    calc['Month'] = calc['Entry Date'].dt.to_period('M').astype(str)
-    monthly = calc.groupby('Month')['Net PnL'].sum().reset_index()
-
-    fig_month = px.bar(monthly, x='Month', y='Net PnL')
-    st.plotly_chart(fig_month, use_container_width=True)
-
-
-else:
-    st.info("👆 Upload a CSV file to start analysis")
