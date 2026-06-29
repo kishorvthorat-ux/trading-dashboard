@@ -6,8 +6,13 @@ st.write("Files visible to Streamlit:", os.listdir())
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from main import process_csv
-
+# from main import process_csv
+# import os
+import sys
+sys.path.append(os.getcwd())
+import main
+calc, stats, excel_file = main.process_csv(uploaded_file)
+ 
 st.set_page_config(layout="wide")
 
 st.title("📊 Trading Analyzer Dashboard")
