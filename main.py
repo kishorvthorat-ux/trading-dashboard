@@ -128,27 +128,142 @@ def process_csv(file):
     # ---------------- EXCEL ----------------
     output = io.BytesIO()
 
-    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
 
-        calc.to_excel(writer, sheet_name="Calculated", index=False)
-        stats.to_excel(writer, sheet_name="Stats", index=False)
-        occurrence.to_excel(writer, sheet_name="Occurrence", index=False)
-        pivot_pnl.to_excel(writer, sheet_name="PnL Pivot")
-        pivot_returns.to_excel(writer, sheet_name="Returns Pivot")
+    calc.to_excel(writer, sheet_name="Calculated", index=False)
+    stats.to_excel(writer, sheet_name="Stats", index=False)
+    occurrence.to_excel(writer, sheet_name="Occurrence", index=False)
+    pivot_pnl.to_excel(writer, sheet_name="PnL Pivot")
+    pivot_returns.to_excel(writer, sheet_name="Returns Pivot")
 
-        workbook = writer.book
-        ws = writer.sheets['Calculated']
+    workbook = writer.book
 
-        green = workbook.add_format({'bg_color': '#C6EFCE'})
-        red = workbook.add_format({'bg_color': '#FFC7CE'})
+    # ---------------- COMMON FORMATS ----------------
+    header_format = workbook.add_format({
+        'bold': True,
+        'border': 1,
+        'align': 'center'
+    })
 
-        col = calc.columns.get_loc("Net PnL")
+    border_format = workbook.add_format({
+        'border': 1
+    })
 
-        ws.conditional_format(1, col, len(calc), col,
-            {'type': 'cell', 'criteria': '>', 'value': 0, 'format': green})
+    currency_fmt = workbook.add_format({
+        'num_format': '₹#,##0',
+        'border': 1
+    })
 
-        ws.conditional_format(1, col, len(calc), col,
-            {'type': 'cell', 'criteria': '<', 'value': 0, 'format': red})
+    percent_fmt = workbook.add_format({
+        'num_format': '0.00%',
+        'border': 1
+    })
+
+    green = workbook.add_format({'bg_color': '#C6EFCE'})
+    red = workbook.add_format({'bg_color': '#FFC7CE'})
+
+    # ---------------- CALCULATED SHEET ----------------
+    ws = writer.sheets['Calculated']
+
+    # ✅ Freeze top row
+    ws.freeze_panes(1, 0)
+
+    # ✅ Apply header format + borders
+    for col_num, col_name in enumerate(calc.columns):
+        ws.write(0, col_num, col_name, header_format)
+        ws.set_column(col_num, col_num, 18)
+
+    # ✅ Apply borders to all data
+    ws.conditional_format(
+        1, 0, len(calc), len(calc.columns),
+        {'type': 'no_blanks', 'format': border_format}
+    )
+
+    # ✅ Currency formatting columns
+    currency_cols = ["Net PnL", "Gross PnL", "Turnover", "Brokerage", "Cumm Profit"]
+
+    for col in currency_cols:
+        if col in calc.columns:
+            idx = calc.columns.get_loc(col)
+            ws.set_column(idx, idx, 18, currency_fmt)
+
+    # ✅ Percentage formatting
+    if "% Returns" in calc.columns:
+        idx = calc.columns.get_loc("% Returns")
+        ws.set_column(idx, idx, 18, percent_fmt)
+
+    # ✅ Green / Red conditional formatting
+    for col in ["Net PnL", "% Returns", "Cumm Profit"]:
+        if col in calc.columns:
+            idx = calc.columns.get_loc(col)
+
+            ws.conditional_format(
+                1, idx, len(calc), idx,
+                {'type': 'cell', 'criteria': '>', 'value': 0, 'format': green}
+            )
+
+            ws.conditional_format(
+                1, idx, len(calc), idx,
+                {'type': 'cell', 'criteria': '<', 'value': 0, 'format': red}
+            )
+
+    # ---------------- PNL PIVOT ----------------
+    pivot_ws = writer.sheets['PnL Pivot']
+    pivot_ws.freeze_panes(1, 1)
+
+    # Header formatting
+    for col_num, col_name in enumerate(pivot_pnl.columns.insert(0, "Year")):
+        pivot_ws.write(0, col_num, col_name, header_format)
+
+    # Heatmap
+    pivot_ws.conditional_format(
+        1, 1,
+        pivot_pnl.shape[0],
+        pivot_pnl.shape[1],
+        {
+            'type': '3_color_scale',
+            'min_color': '#F8696B',
+            'mid_color': '#FFEB84',
+            'max_color': '#63BE7B'
+        }
+    )
+
+    # ---------------- RETURNS PIVOT ----------------
+    ret_ws = writer.sheets['Returns Pivot']
+    ret_ws.freeze_panes(1, 1)
+
+    for col_num, col_name in enumerate(pivot_returns.columns.insert(0, "Year")):
+        ret_ws.write(0, col_num, col_name, header_format)
+
+    ret_ws.conditional_format(
+        1, 1,
+        pivot_returns.shape[0],
+        pivot_returns.shape[1],
+        {
+            'type': '3_color_scale',
+            'min_color': '#F8696B',
+            'mid_color': '#FFEB84',
+            'max_color': '#63BE7B'
+        }
+    )
+
+    # ---------------- STATS SHEET ----------------
+    stats_ws = writer.sheets['Stats']
+    stats_ws.set_column(0, 10, 22)
+
+    for col_num, col_name in enumerate(stats.columns):
+        stats_ws.write(0, col_num, col_name, header_format)
+
+    stats_ws.freeze_panes(1, 0)
+
+    # ---------------- OCCURRENCE ----------------
+    occ_ws = writer.sheets['Occurrence']
+    occ_ws.set_column(0, 5, 18)
+
+    for col_num, col_name in enumerate(occurrence.columns):
+        occ_ws.write(0, col_num, col_name, header_format)
+
+    occ_ws.freeze_panes(1, 0)
 
     output.seek(0)
 
